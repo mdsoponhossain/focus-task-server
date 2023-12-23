@@ -30,7 +30,7 @@ const client = new MongoClient(uri, {
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
-        await client.connect();
+        // await client.connect();
 
         const usersCollection = client.db("focusTaskDB").collection("usersCollection")
         const taskCollections = client.db("focusTaskDB").collection("taskCollections")
@@ -67,7 +67,7 @@ async function run() {
 
     // update task status ;
 
-    app.patch('/update-task-status:id',async(req, res)=>{
+    app.patch('/update-task-status/:id',async(req, res)=>{
         const id = req.params;
         console.log(id);
         const taskInfo = req.body
@@ -84,15 +84,38 @@ async function run() {
     })
     
 
-    // single user all todos;
-    // app.get('/all-todos',async(req,res)=>{
-    //     const email = req.query.user;
-        
-    //     console.log(email)
-    //     const query ={user: email,status:"to-dos"}
-    //     const result = await taskCollections.find(query).toArray();
-    //     res.send(result)
-    // });
+   //task update all property;
+   app.patch('/update-task/:id',async(req,res)=>{
+        const id = req.params.id;
+        const updateTask = req.body;
+        console.log('upadated task id:',id,updateTask)
+        const filter ={_id : new ObjectId(id)};
+        const updateDoc = {
+            $set: {
+               date:updateTask.date,
+               priority:updateTask.priority,
+               title:updateTask.title,
+               description:updateTask.description 
+            }
+        }
+        const result = await taskCollections.updateOne(filter,updateDoc);
+        res.send(result)
+   });
+
+
+   // delete task;
+   app.delete('/deleted-task/:id',async(req,res)=>{
+        const id = req.params.id ;
+        console.log('deleted id:',id);
+        const filter = {_id: new ObjectId(id)};
+        const updateDoc ={
+            $set: {
+                status:'deleted'
+            }
+        }
+        const result = await taskCollections.updateOne(filter,updateDoc);
+        res.send(result)
+   })
 
     app.get('/all-todos',async(req,res)=>{
         const email = req.query.user;
@@ -103,10 +126,19 @@ async function run() {
         res.send(result)
     });
 
+    // get single task by id;
+    app.get('/update-task/:id',async(req, res)=>{
+        const id = req.params.id;
+        console.log('id is:',id)
+        const query ={_id : new ObjectId(id)};
+        const result = await taskCollections.findOne(query);
+        res.send(result)
+    })
+
 
 
         // Send a ping to confirm a successful connection
-        await client.db("admin").command({ ping: 1 });
+        // await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally {
         // Ensures that the client will close when you finish/error
